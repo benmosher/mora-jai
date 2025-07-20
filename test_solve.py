@@ -1,0 +1,24 @@
+import pytest
+from solver import Color, Grid, Position, solve
+
+def test__purple():
+    start = [
+        Color.BLANK, Color.PURPLE, Color.BLANK,
+        Color.BLANK, Color.PINK, Color.BLANK,
+        Color.PURPLE, Color.PURPLE, Color.PURPLE,
+    ]
+    goal = [
+        (Position(-1, -1), Color.PURPLE),
+        (Position(1, -1), Color.PURPLE),
+        (Position(1, 1), Color.PURPLE),
+        (Position(-1, 1), Color.PURPLE),
+    ]
+    grid = Grid(start)
+
+    actual = solve(grid, goal, max_depth=5)
+
+    assert actual is not None, "No solution found"
+
+    play, grid = actual
+    print(grid.display())
+    pytest.fail()
