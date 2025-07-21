@@ -389,8 +389,11 @@ if __name__ == "__main__":
     starting_state = [Color[color] for color in starting_state_str.split()]
     starting_grid = Grid(starting_state)
 
-    goal_color_str = input("Enter the goal color: ").upper()
-    goal_color = Color[goal_color_str]
+    counts = Counter(c for c in starting_grid.colors if c != Color.BLANK)
+    default_goal = counts.most_common(1)[0][0]
+
+    goal_color_str = input(f"Enter the goal color (default: {default_goal.name}): ")
+    goal_color = Color[goal_color_str.upper()] if goal_color_str else default_goal
     goal = corners(goal_color)
 
     max_depth = int(input("Enter the maximum depth (default 10): ") or 10)
