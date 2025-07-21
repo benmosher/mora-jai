@@ -1,3 +1,5 @@
+#TODO: report total press count?
+
 import itertools as it
 
 from collections import Counter, deque
@@ -233,6 +235,9 @@ def blue(position: Position, grid: Grid) -> Grid | None:
 
     # do the behavior for the center color
     return COLOR_BEHAVIORS[center_color](position, grid)
+
+
+COLOR_BEHAVIORS[Color.BLUE] = blue
 
 
 def orange(position: Position, grid: Grid) -> Grid | None:

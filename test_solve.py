@@ -69,3 +69,6 @@ def test__sanctum_arch_aries():
     actual = solve(grid, goal, max_depth=10)
 
     assert actual is not None, "No solution found"
+
+
+# white white white yellow white black blue blue blue, goal: blue
