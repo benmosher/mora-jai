@@ -8,7 +8,7 @@ from typing import Callable, Iterable, Iterator, MutableMapping, NamedTuple, Sel
 
 
 class Color(Enum):
-    BLANK = auto()
+    GRAY = auto()
     RED = auto()
     BLACK = auto()
     GREEN = auto()
@@ -75,7 +75,7 @@ class Grid(MutableMapping[Position, Color]):
         self.colors[self._index(position)] = color
 
     def __delitem__(self, position: Position) -> None:
-        self.colors[self._index(position)] = Color.BLANK
+        self.colors[self._index(position)] = Color.GRAY
 
     def __iter__(self) -> Iterator[Position]:
         return iter(GRID_POSITIONS)
@@ -118,7 +118,7 @@ type Behavior = Callable[[Position, Grid], None]
 COLOR_BEHAVIORS = dict[Color, Behavior]()
 """This dictionary dispatches the grid updated behavior for each color."""
 
-COLOR_BEHAVIORS[Color.BLANK] = lambda position, grid: None
+COLOR_BEHAVIORS[Color.GRAY] = lambda position, grid: None
 
 
 def purple(position: Position, grid: Grid) -> Grid | None:
@@ -217,7 +217,7 @@ def white(position: Position, grid: Grid) -> Grid | None:
     my_color = grid[position]
     new_grid = grid.copy()
     for neighbor in neighbors(position):
-        if grid[neighbor] == Color.BLANK:
+        if grid[neighbor] == Color.GRAY:
             new_grid[neighbor] = my_color
 
     return new_grid
@@ -254,7 +254,7 @@ def orange(position: Position, grid: Grid) -> Grid | None:
         return None
 
     # if the most common color is blank or my color, return None -- no change
-    if color == Color.BLANK or color == my_color:
+    if color == Color.GRAY or color == my_color:
         return None
 
     new_grid = grid.copy()
@@ -396,7 +396,7 @@ if __name__ == "__main__":
     starting_state = [Color[color] for color in starting_state_str.split()]
     starting_grid = Grid(starting_state)
 
-    counts = Counter(c for c in starting_grid.colors if c != Color.BLANK)
+    counts = Counter(c for c in starting_grid.colors if c != Color.GRAY)
     default_goal = counts.most_common(1)[0][0]
 
     goal_color_str = input(f"Enter the goal color[s] (default: {default_goal.name}): ").upper()

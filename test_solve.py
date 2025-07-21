@@ -22,8 +22,8 @@ def test__corners():
 
 def test__purple():
     grid = create_grid(
-        (Color.BLANK, Color.PURPLE, Color.BLANK),
-        (Color.BLANK, Color.PINK, Color.BLANK),
+        (Color.GRAY, Color.PURPLE, Color.GRAY),
+        (Color.GRAY, Color.PINK, Color.GRAY),
         (Color.PURPLE, Color.PURPLE, Color.PURPLE),
     )
     goal = corners(Color.PURPLE)
@@ -34,9 +34,9 @@ def test__purple():
 
 def test__trading_post():
     grid = create_grid(
-        (Color.PINK, Color.BLANK, Color.BLANK),
-        (Color.BLANK, Color.YELLOW, Color.YELLOW),
-        (Color.BLANK, Color.YELLOW, Color.YELLOW),
+        (Color.PINK, Color.GRAY, Color.GRAY),
+        (Color.GRAY, Color.YELLOW, Color.YELLOW),
+        (Color.GRAY, Color.YELLOW, Color.YELLOW),
     )
 
     goal = corners(Color.YELLOW)
@@ -47,7 +47,7 @@ def test__trading_post():
 
 def test__fenn():
     grid = create_grid(
-        (Color.BLANK, Color.GREEN, Color.BLANK),
+        (Color.GRAY, Color.GREEN, Color.GRAY),
         (Color.ORANGE, Color.RED, Color.ORANGE),
         (Color.WHITE, Color.GREEN, Color.BLACK),
     )
@@ -60,9 +60,9 @@ def test__fenn():
 
 def test__sanctum_arch_aries():
     grid = create_grid(
-        (Color.BLACK, Color.YELLOW, Color.BLANK),
+        (Color.BLACK, Color.YELLOW, Color.GRAY),
         (Color.YELLOW, Color.GREEN, Color.YELLOW),
-        (Color.BLANK, Color.YELLOW, Color.BLACK),
+        (Color.GRAY, Color.YELLOW, Color.BLACK),
     )
 
     goal = corners(Color.YELLOW)
