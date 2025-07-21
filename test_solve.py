@@ -1,6 +1,15 @@
 import pytest
 from solver import Color, Grid, Position, corners, playthrough, solve
 
+type Row = tuple[Color, Color, Color]
+type InputGrid = tuple[Row, Row, Row]
+
+
+def create_grid(top: Row, middle: Row, bottom: Row) -> Grid:
+    """Helper function to create a Grid from a tuple of rows."""
+    return Grid([color for row in (top, middle, bottom) for color in row])
+
+
 def test__corners():
     goal = corners(Color.PURPLE)
     assert goal == {
@@ -10,63 +19,53 @@ def test__corners():
         (Position(-1, 1), Color.PURPLE),
     }
 
-def test__purple():
-    start = [
-        Color.BLANK, Color.PURPLE, Color.BLANK,
-        Color.BLANK, Color.PINK, Color.BLANK,
-        Color.PURPLE, Color.PURPLE, Color.PURPLE,
-    ]
-    goal = corners(Color.PURPLE)
-    grid = Grid(start)
 
+def test__purple():
+    grid = create_grid(
+        (Color.BLANK, Color.PURPLE, Color.BLANK),
+        (Color.BLANK, Color.PINK, Color.BLANK),
+        (Color.PURPLE, Color.PURPLE, Color.PURPLE),
+    )
+    goal = corners(Color.PURPLE)
     actual = solve(grid, goal, max_depth=5)
 
     assert actual is not None, "No solution found"
 
-    # play, final_grid = actual
-    # for position, grid in playthrough(play, grid):
-    #     print(f"Play: {position}, Grid:\n{grid.display()}\n")
-
-    # pytest.fail()
-
 
 def test__trading_post():
-    start = [
-        Color.PINK, Color.BLANK, Color.BLANK,
-        Color.BLANK, Color.YELLOW, Color.YELLOW,
-        Color.BLANK, Color.YELLOW, Color.YELLOW,
-    ]
+    grid = create_grid(
+        (Color.PINK, Color.BLANK, Color.BLANK),
+        (Color.BLANK, Color.YELLOW, Color.YELLOW),
+        (Color.BLANK, Color.YELLOW, Color.YELLOW),
+    )
 
     goal = corners(Color.YELLOW)
-
-    actual = solve(Grid(start), goal, max_depth=10)
+    actual = solve(grid, goal, max_depth=10)
 
     assert actual is not None, "No solution found"
 
 
 def test__fenn():
-    start = [
-        Color.BLANK, Color.GREEN, Color.BLANK,
-        Color.ORANGE, Color.RED, Color.ORANGE,
-        Color.WHITE, Color.GREEN, Color.BLACK,
-    ]
+    grid = create_grid(
+        (Color.BLANK, Color.GREEN, Color.BLANK),
+        (Color.ORANGE, Color.RED, Color.ORANGE),
+        (Color.WHITE, Color.GREEN, Color.BLACK),
+    )
 
     goal = corners(Color.RED)
-
-    actual = solve(Grid(start), goal, max_depth=20)
+    actual = solve(grid, goal, max_depth=20)
 
     assert actual is not None, "No solution found"
 
 
 def test__sanctum_arch_aries():
-    start = [
-        Color.BLACK, Color.YELLOW, Color.BLANK,
-        Color.YELLOW, Color.GREEN, Color.YELLOW,
-        Color.BLANK, Color.YELLOW, Color.BLACK,
-    ]
+    grid = create_grid(
+        (Color.BLACK, Color.YELLOW, Color.BLANK),
+        (Color.YELLOW, Color.GREEN, Color.YELLOW),
+        (Color.BLANK, Color.YELLOW, Color.BLACK),
+    )
 
     goal = corners(Color.YELLOW)
-
-    actual = solve(Grid(start), goal, max_depth=10)
+    actual = solve(grid, goal, max_depth=10)
 
     assert actual is not None, "No solution found"
