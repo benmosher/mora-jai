@@ -1,7 +1,6 @@
 import itertools as it
 
 from collections import Counter, deque
-from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Callable, Iterable, Iterator, MutableMapping, NamedTuple, Self
 
@@ -296,8 +295,7 @@ def pink(position: Position, grid: Grid) -> Grid | None:
 COLOR_BEHAVIORS[Color.PINK] = pink
 
 
-@dataclass(frozen=True)
-class Play:
+class Play(NamedTuple):
     previous: "Play"
     press: Position
     depth: int = 0
@@ -324,7 +322,7 @@ def press(
 def solve(
     grid: Grid,
     goal: Goal,
-    max_depth: int = 5,
+    max_depth: int = 10,
 ) -> tuple[Play, Grid] | None:
     """Finds a Play linked list that solves the grid to the goal."""
 
