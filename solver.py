@@ -1,37 +1,27 @@
-# TODO: 
-# - prune cycles? might be cheaper to let them ride
-# - detect longer paths to the same state?
-# - prune any equivalent states in a single generation (e.g. 2 blacks on one row)
-#    - all these can be accomplished with a hash table of all formerly reached states
-
-# TODO: score and prioritize states based on their potential to reach the goal
-# - color in the correct position
-# - colors within 1 position of the correct position
-
+import itertools as it
 
 from collections import Counter, deque
 from dataclasses import dataclass
 from enum import Enum, auto
-from hmac import new
-from tarfile import data_filter
-from typing import Callable, Collection, Iterable, Iterator, Mapping, MutableMapping, NamedTuple, Self
+from typing import Callable, Iterable, Iterator, MutableMapping, NamedTuple, Self
 
 
 class Color(Enum):
     BLANK = auto()
-    RED = auto() 
+    RED = auto()
     BLACK = auto()
     GREEN = auto()
     YELLOW = auto()
     PURPLE = auto()
     WHITE = auto()
     BLUE = auto()
-    ORANGE = auto() 
+    ORANGE = auto()
     PINK = auto()
 
 
 class Position(NamedTuple):
     """Represents a position in the grid."""
+
     x: int
     y: int
 
@@ -41,16 +31,18 @@ class Position(NamedTuple):
     def valid(self) -> bool:
         return -1 <= self.x <= 1 and -1 <= self.y <= 1
 
+
 CENTER = Position(0, 0)
 
-Goal = Collection[tuple[Position, Color]]
-"""Mapping from corners to goal colors."""
+type Goal = set[tuple[Position, Color]]
+"""Mapping from positions to goal colors. Almost always the corners in a single color."""
 
-GridState = tuple[Color, ...]
+type GridState = tuple[Color, ...]
 """Hashable grid tuple for testing previous states."""
 
 GRID_POSITIONS = [Position(x, y) for x in (-1, 0, 1) for y in (-1, 0, 1)]
 """All grid positions, in the order they are stored in the grid array."""
+
 
 # 3x3 grid of colors, -1, 0, 1 indexes
 class Grid(MutableMapping[Position, Color]):
@@ -65,12 +57,11 @@ class Grid(MutableMapping[Position, Color]):
     def hashable_state(self) -> GridState:
         """Returns a hashable representation of the grid."""
         return tuple(self.colors)
-    
+
     def display(self) -> str:
         """Returns a string representation of the grid."""
         return "\n".join(
-            " ".join(self[Position(x, y)].name for x in (-1, 0, 1))
-            for y in (-1, 0, 1)
+            " ".join(self[Position(x, y)].name for x in (-1, 0, 1)) for y in (-1, 0, 1)
         )
 
     def _index(self, position: Position) -> int:
@@ -84,13 +75,13 @@ class Grid(MutableMapping[Position, Color]):
 
     def __delitem__(self, position: Position) -> None:
         self.colors[self._index(position)] = Color.BLANK
-    
+
     def __iter__(self) -> Iterator[Position]:
         return iter(GRID_POSITIONS)
-        
+
     def __len__(self) -> int:
         return 9
-    
+
     # this was considerably slower than using a filtered list comprehension with items()!
     # def color_positions(self, color: Color) -> Iterable[Position]:
     #     """Returns the positions of the given color in the grid."""
@@ -112,18 +103,16 @@ class Grid(MutableMapping[Position, Color]):
         a, b = self.colors[idx1], self.colors[idx2]
         if a == b:
             return None
-        
-        clone = Grid(list(self.colors))
+
+        clone = self.copy()
         clone.colors[idx1], clone.colors[idx2] = b, a
         return clone
 
     def meets_goal(self, goal: Goal) -> bool:
         return all(self[pos] == color for pos, color in goal)
 
-"""Mapping from grid coordinates to colors. Represents an intermediate state."""
 
-
-Behavior = Callable[[Position, Grid], None]
+type Behavior = Callable[[Position, Grid], None]
 
 COLOR_BEHAVIORS = dict[Color, Behavior]()
 """This dictionary dispatches the grid updated behavior for each color."""
@@ -137,7 +126,7 @@ def purple(position: Position, grid: Grid) -> Grid | None:
     # no change if on bottom row
     if position.y == 1:
         return None
-    
+
     new_position = Position(position.x, position.y + 1)
     return grid.swap(position, new_position)
 
@@ -155,7 +144,9 @@ def yellow(position: Position, grid: Grid) -> Grid | None:
     new_position = Position(position.x, position.y - 1)
     return grid.swap(position, new_position)
 
+
 COLOR_BEHAVIORS[Color.YELLOW] = yellow
+
 
 def red(position: Position, grid: Grid) -> Grid | None:
     """When any red is pressed, all whites turn black, and all blacks turn red."""
@@ -165,7 +156,7 @@ def red(position: Position, grid: Grid) -> Grid | None:
     blacks = [pos for pos, color in grid.items() if color == Color.BLACK]
     if not whites and not blacks:
         return None
-    
+
     new_grid = grid.copy()
     for white in whites:
         new_grid[white] = Color.BLACK
@@ -173,7 +164,9 @@ def red(position: Position, grid: Grid) -> Grid | None:
         new_grid[black] = Color.RED
     return new_grid
 
+
 COLOR_BEHAVIORS[Color.RED] = red
+
 
 def green(position: Position, grid: Grid) -> Grid | None:
     """Swaps with opposite corner or edge. Does nothing in the center."""
@@ -186,6 +179,7 @@ def green(position: Position, grid: Grid) -> Grid | None:
 
 COLOR_BEHAVIORS[Color.GREEN] = green
 
+
 def black(position: Position, grid: Grid) -> Grid | None:
     """Rotates the row to the right."""
     row = [grid[Position(x, position.y)] for x in (1, -1, 0)]
@@ -195,16 +189,17 @@ def black(position: Position, grid: Grid) -> Grid | None:
     new_grid = grid.copy()
     for i, color in enumerate(row, start=-1):
         new_grid[Position(i, position.y)] = color
-    
+
     return new_grid
+
 
 COLOR_BEHAVIORS[Color.BLACK] = black
 
 ADJACENTS = [
     Position(0, 1),  # down
     Position(1, 0),  # right
-    Position(0, -1), # up
-    Position(-1, 0), # left
+    Position(0, -1),  # up
+    Position(-1, 0),  # left
 ]
 
 
@@ -212,28 +207,31 @@ def neighbors(position: Position) -> Iterable[Position]:
     """Returns the positions of the adjacent neighbors in the grid."""
     return (p for adj in ADJACENTS if (p := position + adj).valid())
 
+
 def white(position: Position, grid: Grid) -> Grid | None:
     """Turns blank and turns adjacent blanks to the position's color.
-    
+
     Using the position is necessary because when blue triggers this, it should be blue.
     """
     my_color = grid[position]
     new_grid = grid.copy()
-    for neighbor in neighbors(position): 
+    for neighbor in neighbors(position):
         if grid[neighbor] == Color.BLANK:
             new_grid[neighbor] = my_color
 
-    return new_grid  
+    return new_grid
+
 
 COLOR_BEHAVIORS[Color.WHITE] = white
 
+
 def blue(position: Position, grid: Grid) -> Grid | None:
     center_color = grid[CENTER]
-    
+
     # base case: copying blue is no-op
     if center_color == Color.BLUE:
         return None
-    
+
     # do the behavior for the center color
     return COLOR_BEHAVIORS[center_color](position, grid)
 
@@ -259,22 +257,25 @@ def orange(position: Position, grid: Grid) -> Grid | None:
     new_grid[position] = color
     return new_grid
 
+
 COLOR_BEHAVIORS[Color.ORANGE] = orange
 
 
 CYCLE_POSITIONS = [
-    Position(0, -1), # N
-    Position(1, -1), # NE
+    Position(0, -1),  # N
+    Position(1, -1),  # NE
     Position(1, 0),  # E
     Position(1, 1),  # SE
     Position(0, 1),  # S
-    Position(-1, 1), # SW
-    Position(-1, 0), # W
-    Position(-1, -1) # NW
+    Position(-1, 1),  # SW
+    Position(-1, 0),  # W
+    Position(-1, -1),  # NW
 ]
+
 
 def cycle(position: Position) -> Iterable[Position]:
     return (p for adj in CYCLE_POSITIONS if (p := position + adj).valid())
+
 
 def pink(position: Position, grid: Grid) -> Grid | None:
     """Cycles the colors clockwise around the position."""
@@ -291,15 +292,17 @@ def pink(position: Position, grid: Grid) -> Grid | None:
 
     return new_grid
 
+
 COLOR_BEHAVIORS[Color.PINK] = pink
+
 
 @dataclass(frozen=True)
 class Play:
-    previous: 'Play'
+    previous: "Play"
     press: Position
     depth: int = 0
 
-    def next(self, position: Position) -> 'Play':
+    def next(self, position: Position) -> "Play":
         """Returns a new Play with the given position pressed."""
         return Play(self, position, self.depth + 1)
 
@@ -308,6 +311,7 @@ class State(NamedTuple):
     grid: Grid
     play: Play | None
 
+
 def press(
     position: Position,
     grid: Grid,
@@ -315,7 +319,6 @@ def press(
     """Returns a grid updated by the play, or None if no change was made."""
     behavior = COLOR_BEHAVIORS[grid[position]]
     return behavior(position, grid)
-
 
 
 def solve(
@@ -330,7 +333,7 @@ def solve(
 
     # initialize the queue with the starting state
     queue = deque()
-    played_states = {grid.hashable_state()}
+    played_states = {grid.hashable_state()}  # max size: 9! (~362k)
     queue.append(State(grid, None))
 
     while queue:
@@ -342,7 +345,6 @@ def solve(
             new_grid = press(pos, grid)
             if new_grid is None:
                 continue
-
 
             # immediately return if the new grid meets the goal!
             if new_grid.meets_goal(goal):
@@ -376,10 +378,8 @@ def playthrough(play: Play, grid: Grid) -> Iterable[tuple[Position, Grid]]:
         yield p, grid
 
 
-CORNERS = [
-    Position(-1, -1), Position(1, -1),
-    Position(1, 1), Position(-1, 1)
-]
+CORNERS = {Position(x, y) for x, y in it.product((-1, 1), repeat=2)}
+
 
 def corners(color: Color) -> Goal:
     """Returns the goal for the given color."""

@@ -1,6 +1,15 @@
 import pytest
 from solver import Color, Grid, Position, corners, playthrough, solve
 
+def test__corners():
+    goal = corners(Color.PURPLE)
+    assert goal == {
+        (Position(-1, -1), Color.PURPLE),
+        (Position(1, -1), Color.PURPLE),
+        (Position(1, 1), Color.PURPLE),
+        (Position(-1, 1), Color.PURPLE),
+    }
+
 def test__purple():
     start = [
         Color.BLANK, Color.PURPLE, Color.BLANK,
@@ -20,6 +29,7 @@ def test__purple():
 
     # pytest.fail()
 
+
 def test__trading_post():
     start = [
         Color.PINK, Color.BLANK, Color.BLANK,
@@ -32,7 +42,6 @@ def test__trading_post():
     actual = solve(Grid(start), goal, max_depth=10)
 
     assert actual is not None, "No solution found"
-
 
 
 def test__fenn():

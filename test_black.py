@@ -1,5 +1,6 @@
 from solver import Color, black, Position
 
+
 def test__black():
     grid = {
         Position(-1, 0): Color.BLACK,
@@ -7,8 +8,8 @@ def test__black():
         Position(1, 0): Color.RED,
     }
 
-    actual = black(Position(-1, 0), grid) 
-    
+    actual = black(Position(-1, 0), grid)
+
     print(actual)
 
     assert actual == {
