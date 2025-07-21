@@ -382,3 +382,26 @@ CORNERS = {Position(x, y) for x, y in it.product((-1, 1), repeat=2)}
 def corners(color: Color) -> Goal:
     """Returns the goal for the given color."""
     return {(pos, color) for pos in CORNERS}
+
+
+if __name__ == "__main__":
+    starting_state_str = input("Enter the starting state (9 colors, space-separated, top/middle/bottom row): ").upper()
+    starting_state = [Color[color] for color in starting_state_str.split()]
+    starting_grid = Grid(starting_state)
+
+    goal_color_str = input("Enter the goal color: ").upper()
+    goal_color = Color[goal_color_str]
+    goal = corners(goal_color)
+
+    max_depth = int(input("Enter the maximum depth (default 10): ") or 10)
+
+    print() # line break
+
+    solution = solve(starting_grid, goal, max_depth)
+    if solution:
+        play, final_grid = solution
+        print(f"Solution found ({play.depth} moves):")
+        for position, grid in playthrough(play, starting_grid):
+            print(f"Play: {position}, Grid:\n{grid.display()}\n")
+    else:
+        print("No solution found.")
