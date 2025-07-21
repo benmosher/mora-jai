@@ -47,9 +47,10 @@ Goal = Collection[tuple[Position, Color]]
 """Mapping from corners to goal colors."""
 
 GridState = tuple[Color, ...]
-"""Hashable grid tuple."""
+"""Hashable grid tuple for testing previous states."""
 
 GRID_POSITIONS = [Position(x, y) for x in (-1, 0, 1) for y in (-1, 0, 1)]
+"""All grid positions, in the order they are stored in the grid array."""
 
 # 3x3 grid of colors, -1, 0, 1 indexes
 class Grid(MutableMapping[Position, Color]):
@@ -89,6 +90,13 @@ class Grid(MutableMapping[Position, Color]):
         
     def __len__(self) -> int:
         return 9
+    
+    # this was considerably slower than using a filtered list comprehension with items()!
+    # def color_positions(self, color: Color) -> Iterable[Position]:
+    #     """Returns the positions of the given color in the grid."""
+    #     for i, c in enumerate(self.colors):
+    #         if c == color:
+    #             yield GRID_POSITIONS[i]
 
     def copy(self) -> Self:
         """Returns a copy of the grid."""
@@ -118,6 +126,8 @@ class Grid(MutableMapping[Position, Color]):
 Behavior = Callable[[Position, Grid], None]
 
 COLOR_BEHAVIORS = dict[Color, Behavior]()
+"""This dictionary dispatches the grid updated behavior for each color."""
+
 COLOR_BEHAVIORS[Color.BLANK] = lambda position, grid: None
 
 
@@ -147,8 +157,10 @@ def yellow(position: Position, grid: Grid) -> Grid | None:
 
 COLOR_BEHAVIORS[Color.YELLOW] = yellow
 
-# TODO: do blues behave as white or black here if one of them is in the center?
 def red(position: Position, grid: Grid) -> Grid | None:
+    """When any red is pressed, all whites turn black, and all blacks turn red."""
+    # TODO: do blues behave as white or black here if one of them is in the center?
+
     whites = [pos for pos, color in grid.items() if color == Color.WHITE]
     blacks = [pos for pos, color in grid.items() if color == Color.BLACK]
     if not whites and not blacks:
