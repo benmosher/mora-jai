@@ -214,11 +214,14 @@ def white(position: Position, grid: Grid) -> Grid | None:
 
     Using the position is necessary because when blue triggers this, it should be blue.
     """
-    my_color = grid[position]
+    color = grid[position]
     new_grid = grid.copy()
+
+    # blank out this position
+    del new_grid[position]  
     for neighbor in neighbors(position):
-        if grid[neighbor] == Color.GRAY:
-            new_grid[neighbor] = my_color
+        if grid[neighbor] == color:
+            del new_grid[neighbor]
 
     return new_grid
 
