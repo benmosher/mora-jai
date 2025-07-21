@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from hmac import new
 from tarfile import data_filter
-from typing import Callable, Collection, Iterable, Mapping, MutableMapping, NamedTuple, Self
+from typing import Callable, Collection, Iterable, Iterator, Mapping, MutableMapping, NamedTuple, Self
 
 
 class Color(Enum):
@@ -49,6 +49,8 @@ Goal = Collection[tuple[Position, Color]]
 GridState = tuple[Color, ...]
 """Hashable grid tuple."""
 
+GRID_POSITIONS = [Position(x, y) for x in (-1, 0, 1) for y in (-1, 0, 1)]
+
 # 3x3 grid of colors, -1, 0, 1 indexes
 class Grid(MutableMapping[Position, Color]):
     def __init__(self, colors: list[Color]) -> None:
@@ -79,13 +81,12 @@ class Grid(MutableMapping[Position, Color]):
     def __setitem__(self, position: Position, color: Color) -> None:
         self.colors[self._index(position)] = color
 
-
     def __delitem__(self, position: Position) -> None:
-        raise NotImplementedError("Grid items cannot be deleted")
+        self.colors[self._index(position)] = Color.BLANK
     
-    def __iter__(self) -> Iterable[Position]:
-        raise NotImplementedError("Grid items cannot be iterated over directly")
-    
+    def __iter__(self) -> Iterator[Position]:
+        return iter(GRID_POSITIONS)
+        
     def __len__(self) -> int:
         return 9
 
@@ -290,7 +291,6 @@ class Play:
         """Returns a new Play with the given position pressed."""
         return Play(self, position, self.depth + 1)
 
-PLAYS =  [Position(0, 0)] + CYCLE_POSITIONS  # add the center position
 
 class State(NamedTuple):
     grid: Grid
@@ -321,12 +321,10 @@ def solve(
     played_states = {grid.hashable_state()}
     queue.append(State(grid, None))
 
-
-
     while queue:
         grid, last_play = queue.popleft()
 
-        for pos in PLAYS:
+        for pos in GRID_POSITIONS:
             play = last_play.next(pos) if last_play else Play(None, pos)
 
             new_grid = press(pos, grid)
@@ -366,3 +364,11 @@ def playthrough(play: Play, grid: Grid) -> Iterable[tuple[Position, Grid]]:
         yield p, grid
 
 
+CORNERS = [
+    Position(-1, -1), Position(1, -1),
+    Position(1, 1), Position(-1, 1)
+]
+
+def corners(color: Color) -> Goal:
+    """Returns the goal for the given color."""
+    return {(pos, color) for pos in CORNERS}
