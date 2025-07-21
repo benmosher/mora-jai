@@ -413,5 +413,6 @@ if __name__ == "__main__":
         print(f"Solution found ({play.depth + 1} moves):")
         for position, grid in playthrough(play, starting_grid):
             print(f"Play: {position}, Grid:\n{grid.display()}\n")
+            input()
     else:
         print("No solution found.")
