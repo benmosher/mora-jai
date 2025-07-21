@@ -349,3 +349,18 @@ def solve(
         # create next plays
         for pos in PLAYS:
             queue.append(State(new_grid, play.next(pos)))
+
+
+def playthrough(play: Play, grid: Grid) -> Iterable[tuple[Position, Grid]]:
+    """Returns the grid after playing through the given play."""
+
+    plays = list[Position]()
+    while play:
+        plays.append(play.press)
+        play = play.previous
+
+    for p in reversed(plays):
+        grid = press(p, grid)
+        yield p, grid
+
+

@@ -1,5 +1,5 @@
-import pytest
-from solver import Color, Grid, Position, solve
+
+from solver import Color, Grid, Position, playthrough, solve
 
 def test__purple():
     start = [
@@ -19,6 +19,8 @@ def test__purple():
 
     assert actual is not None, "No solution found"
 
-    play, grid = actual
-    print(grid.display())
-    pytest.fail()
+    # play, final_grid = actual
+    # for position, grid in playthrough(play, grid):
+    #     print(f"Play: {position}, Grid:\n{grid.display()}\n")
+
+    # pytest.fail()
