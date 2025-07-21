@@ -331,7 +331,7 @@ def solve(
 
     # initialize the queue with the starting state
     queue = deque()
-    played_states = {grid.hashable_state()}  # max size: 9! (~362k)
+    played_states = {grid.hashable_state()}  # max size: 9! (~362k, not accounting for color changes)
     queue.append(State(grid, None))
 
     while queue:
