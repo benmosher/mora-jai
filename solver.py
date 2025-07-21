@@ -385,7 +385,9 @@ def corners(color: Color) -> Goal:
 
 
 if __name__ == "__main__":
-    starting_state_str = input("Enter the starting state (9 colors, space-separated, top/middle/bottom row): ").upper()
+    starting_state_str = input(
+        "Enter the starting state (9 colors, space-separated, top/middle/bottom row): "
+    ).upper()
     starting_state = [Color[color] for color in starting_state_str.split()]
     starting_grid = Grid(starting_state)
 
@@ -398,7 +400,7 @@ if __name__ == "__main__":
 
     max_depth = int(input("Enter the maximum depth (default 10): ") or 10)
 
-    print() # line break
+    print()  # line break
 
     solution = solve(starting_grid, goal, max_depth)
     if solution:
