@@ -294,7 +294,7 @@ PLAYS =  [Position(0, 0)] + CYCLE_POSITIONS  # add the center position
 
 class State(NamedTuple):
     grid: Grid
-    play: Play
+    play: Play | None
 
 def press(
     position: Position,
@@ -319,36 +319,38 @@ def solve(
     # initialize the queue with the starting state
     queue = deque()
     played_states = {grid.hashable_state()}
+    queue.append(State(grid, None))
 
-    for pos in PLAYS:
-        queue.append(State(grid, Play(None, pos, 0)))
 
 
     while queue:
-        grid, play = queue.popleft()
+        grid, last_play = queue.popleft()
 
-        new_grid = press(play.press, grid)
-        if new_grid is None:
-            continue
-
-        # immediately return if the new grid meets the goal!
-        if new_grid.meets_goal(goal):
-            return play, new_grid
-
-        hs = new_grid.hashable_state()
-        if hs in played_states:
-            # cycle or shorter path already played
-            continue
-
-        played_states.add(hs)
-
-        # if we've reached the max depth, skip this state
-        if play.depth >= max_depth:
-            continue
-
-        # create next plays
         for pos in PLAYS:
-            queue.append(State(new_grid, play.next(pos)))
+            play = last_play.next(pos) if last_play else Play(None, pos)
+
+            new_grid = press(pos, grid)
+            if new_grid is None:
+                continue
+
+
+            # immediately return if the new grid meets the goal!
+            if new_grid.meets_goal(goal):
+                return play, new_grid
+
+            hs = new_grid.hashable_state()
+            if hs in played_states:
+                # cycle or shorter path already played
+                continue
+
+            played_states.add(hs)
+
+            # if we've reached the max depth, skip this state
+            if play.depth >= max_depth:
+                continue
+
+            # enqueue state for exploration
+            queue.append(State(new_grid, play))
 
 
 def playthrough(play: Play, grid: Grid) -> Iterable[tuple[Position, Grid]]:
