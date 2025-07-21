@@ -403,7 +403,7 @@ if __name__ == "__main__":
     solution = solve(starting_grid, goal, max_depth)
     if solution:
         play, final_grid = solution
-        print(f"Solution found ({play.depth} moves):")
+        print(f"Solution found ({play.depth + 1} moves):")
         for position, grid in playthrough(play, starting_grid):
             print(f"Play: {position}, Grid:\n{grid.display()}\n")
     else:
