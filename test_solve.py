@@ -44,18 +44,18 @@ def test__trading_post():
 
     assert actual is not None, "No solution found"
 
+@pytest.mark.skip(reason="not sure why this is failing")
+def test__fenn():
+    grid = create_grid(
+        (Color.GRAY, Color.GREEN, Color.GRAY),
+        (Color.ORANGE, Color.RED, Color.ORANGE),
+        (Color.WHITE, Color.GREEN, Color.BLACK),
+    )
 
-# def test__fenn():
-#     grid = create_grid(
-#         (Color.GRAY, Color.GREEN, Color.GRAY),
-#         (Color.ORANGE, Color.RED, Color.ORANGE),
-#         (Color.WHITE, Color.GREEN, Color.BLACK),
-#     )
+    goal = corners(Color.RED)
+    actual = solve(grid, goal, max_depth=30)
 
-#     goal = corners(Color.RED)
-#     actual = solve(grid, goal, max_depth=20)
-
-#     assert actual is not None, "No solution found"
+    assert actual is not None, "No solution found"
 
 
 def test__sanctum_arch_aries():
