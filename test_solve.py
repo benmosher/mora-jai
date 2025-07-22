@@ -44,7 +44,6 @@ def test__trading_post():
 
     assert actual is not None, "No solution found"
 
-@pytest.mark.skip(reason="not sure why this is failing")
 def test__fenn():
     grid = create_grid(
         (Color.GRAY, Color.GREEN, Color.GRAY),
