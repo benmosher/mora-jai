@@ -1,10 +1,14 @@
 #TODO: report total press count?
 
+from dataclasses import field
 import itertools as it
+import heapq
 
-from collections import Counter, deque
+from collections import Counter
 from enum import Enum, auto
 from typing import Callable, Iterable, Iterator, MutableMapping, NamedTuple, Self
+
+from test.test_dataclasses import dataclass
 
 
 class Color(Enum):
@@ -305,10 +309,10 @@ def pink(position: Position, grid: Grid) -> Grid | None:
 
 COLOR_BEHAVIORS[Color.PINK] = pink
 
-
-class Play(NamedTuple):
-    previous: "Play"
-    press: Position
+@dataclass(frozen=True, slots=True, order=True)
+class Play:
+    previous: "Play" = field(compare=False)
+    press: Position = field(compare=False)
     depth: int = 0
 
     def next(self, position: Position) -> "Play":
@@ -316,10 +320,14 @@ class Play(NamedTuple):
         return Play(self, position, self.depth + 1)
 
 
-class State(NamedTuple):
-    grid: Grid
+# ordered by score, then 
+@dataclass(frozen=True, slots=True, order=True)
+class State:
+    grid: Grid = field(compare=False)
     play: Play | None
+    goal_missing: int
 
+    
 
 def press(
     position: Position,
@@ -328,6 +336,17 @@ def press(
     """Returns a grid updated by the play, or None if no change was made."""
     behavior = COLOR_BEHAVIORS[grid[position]]
     return behavior(position, grid)
+
+
+def goals_remaining(
+    grid: Grid,
+    goal: Goal,
+) -> int:
+    # number of positions that don't match the goal color
+    # used so min-heap prioritizes states closer to the goal
+    return sum(
+        1 for pos, color in goal if grid[pos] != color
+    )  
 
 class Unsolvable(Exception):
     """Raised when queue is exhausted without finding a solution."""
@@ -343,14 +362,15 @@ def solve(
         raise ValueError("Grid already meets goal")
 
     # initialize the queue with the starting state
-    queue = deque()
+    queue = [State(goal_missing=goals_remaining(grid, goal), play=None, grid=grid)]
     played_states = {grid.hashable_state()}  # max size: 9! (~362k, not accounting for color changes)
-    queue.append(State(grid, None))
 
     max_depth_reached = 0
 
     while queue:
-        grid, last_play = queue.popleft()
+        state = heapq.heappop(queue)
+        last_play = state.play
+        grid = state.grid
 
         for pos in GRID_POSITIONS:
             play = last_play.next(pos) if last_play else Play(None, pos)
@@ -376,7 +396,11 @@ def solve(
                 continue
 
             # enqueue state for exploration
-            queue.append(State(new_grid, play))
+            heapq.heappush(queue, State(
+                goal_missing=goals_remaining(new_grid, goal),
+                play=play,
+                grid=new_grid,
+            ))
     
     if not max_depth_reached:
         raise Unsolvable(f"No solution found within max depth; {len(played_states)} unique states explored.")
