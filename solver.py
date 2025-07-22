@@ -309,10 +309,9 @@ def pink(position: Position, grid: Grid) -> Grid | None:
 
 COLOR_BEHAVIORS[Color.PINK] = pink
 
-@dataclass(frozen=True, slots=True, order=True)
-class Play:
-    previous: "Play" = field(compare=False)
-    press: Position = field(compare=False)
+class Play(NamedTuple):
+    previous: "Play" 
+    press: Position 
     depth: int = 0
 
     def next(self, position: Position) -> "Play":
@@ -324,7 +323,7 @@ class Play:
 @dataclass(frozen=True, slots=True, order=True)
 class State:
     grid: Grid = field(compare=False)
-    play: Play | None
+    play: Play | None = field(compare=False)
     goal_missing: int
 
     
@@ -362,13 +361,14 @@ def solve(
         raise ValueError("Grid already meets goal")
 
     # initialize the queue with the starting state
-    queue = [State(goal_missing=goals_remaining(grid, goal), play=None, grid=grid)]
+    current_generation = [State(goal_missing=goals_remaining(grid, goal), play=None, grid=grid)]
+    next_generation = []
     played_states = {grid.hashable_state()}  # max size: 9! (~362k, not accounting for color changes)
 
     max_depth_reached = 0
 
-    while queue:
-        state = heapq.heappop(queue)
+    while current_generation:
+        state = heapq.heappop(current_generation)
         last_play = state.play
         grid = state.grid
 
@@ -395,12 +395,18 @@ def solve(
                 max_depth_reached += 1
                 continue
 
-            # enqueue state for exploration
-            heapq.heappush(queue, State(
+            # enqueue state into next generation
+            next_generation.append(State(
                 goal_missing=goals_remaining(new_grid, goal),
                 play=play,
                 grid=new_grid,
             ))
+
+        # if the current generation is empty, swap in the next generation
+        if not current_generation and next_generation:
+            current_generation = next_generation
+            next_generation = []
+            heapq.heapify(current_generation)
     
     if not max_depth_reached:
         raise Unsolvable(f"No solution found within max depth; {len(played_states)} unique states explored.")
