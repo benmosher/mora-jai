@@ -7,7 +7,7 @@ type InputGrid = tuple[Row, Row, Row]
 
 def create_grid(top: Row, middle: Row, bottom: Row) -> Grid:
     """Helper function to create a Grid from a tuple of rows."""
-    return Grid([color for row in (top, middle, bottom) for color in row])
+    return Grid([color for row in (top, middle, bottom) for color in row], None)
 
 
 def test__corners():

@@ -10,8 +10,6 @@ def test__black():
 
     actual = black(Position(-1, 0), grid)
 
-    print(actual)
-
     assert actual == {
         Position(-1, 0): Color.RED,
         Position(0, 0): Color.BLACK,

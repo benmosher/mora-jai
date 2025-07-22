@@ -5,7 +5,7 @@ import itertools as it
 
 from collections import Counter
 from enum import Enum, auto
-from typing import Callable, Iterable, Iterator, MutableMapping, NamedTuple, Self
+from typing import Callable, Collection, Iterable, Iterator, MutableMapping, NamedTuple, Self
 
 from test.test_dataclasses import dataclass
 
@@ -48,13 +48,63 @@ GRID_POSITIONS = [Position(x, y) for x in (-1, 0, 1) for y in (-1, 0, 1)]
 """All grid positions, in the order they are stored in the grid array."""
 
 
+def possible_colors(colors: Collection[Color]) -> Counter[Color]:
+    """Determine the feasible color counts of the current grid.
+    This is used to determine if the goal is still possible with the current grid state.
+    """
+    counts = Counter(colors)
+
+    # some colors can be changed!
+    oranges = counts[Color.ORANGE]
+    blues = counts[Color.BLUE]
+    blanks = counts[Color.GRAY]
+
+    reds = counts[Color.RED]
+
+    # whites can turn black if there are reds
+    if (whites := counts[Color.WHITE]) and reds:
+        counts[Color.BLACK] += whites
+
+    # blacks can turn red if there are reds
+    if (blacks := counts[Color.BLACK]) and reds:
+        counts[Color.RED] += blacks
+    
+    # TODO: account for blues vs. reds? not sure how this works still. 
+    #       I swear I saw a black turn blue with a red once.
+
+    # whites can create more whites from blanks
+    if whites and blanks:
+        counts[Color.WHITE] += blanks
+
+        # and blues can turn too
+        if blues:
+            counts[Color.BLUE] += blanks
+            # blues could blank and go white
+            counts[Color.WHITE] += blues
+            # whites could blank and go blue
+            counts[Color.BLUE] += whites
+
+    # finally: any oranges and blues can turn any color there could be at least 2 of
+    if oranges:
+        # can increase any color except blanks or oranges, if there are 2 present.
+        # it may not be possible to actually line up on either side of the orange, but that is much more expensive
+        # to determine.
+        doubles = [color for color, count in counts.items() if count >= 2 and color not in (Color.ORANGE, Color.GRAY)]
+        for color in doubles:
+            # if there are blues, they could theoretically turn also
+            counts[color] += oranges + blues
+
+    return counts
+
+
 # 3x3 grid of colors, -1, 0, 1 indexes
 class Grid(MutableMapping[Position, Color]):
-    def __init__(self, colors: list[Color]) -> None:
+    def __init__(self, colors: list[Color], counts: Counter[Color] | None) -> None:
         """Initializes a grid with the given colors."""
         if len(colors) != 9:
             raise ValueError("Grid must have exactly 9 colors")
         self.colors = colors
+        self.counts = counts or possible_colors(colors)
 
     colors: list[Color]
 
@@ -94,8 +144,15 @@ class Grid(MutableMapping[Position, Color]):
     #             yield GRID_POSITIONS[i]
 
     def copy(self) -> Self:
-        """Returns a copy of the grid."""
-        return Grid(list(self.colors))
+        """Returns a copy of the grid.
+        
+        Retains the last color counts.
+        """
+        return Grid(list(self.colors), self.counts)
+
+    def recount(self) -> None:
+        """Recounts the colors in the grid."""
+        self.counts = possible_colors(self.colors)
 
     def swap(self, pos1: Position, pos2: Position) -> Self | None:
         """Return a cloned grid iff the swap results in a new state."""
@@ -166,6 +223,8 @@ def red(position: Position, grid: Grid) -> Grid | None:
         new_grid[white] = Color.BLACK
     for black in blacks:
         new_grid[black] = Color.RED
+
+    new_grid.recount()  # rebuild possible future colors
     return new_grid
 
 
@@ -228,6 +287,9 @@ def white(position: Position, grid: Grid) -> Grid | None:
             del new_grid[neighbor]
         elif neighbor_color == Color.GRAY:
             new_grid[neighbor] = color
+    
+    # it's possible white (or blue) was completely blanked out, so recount
+    new_grid.recount()
 
     return new_grid
 
@@ -268,6 +330,9 @@ def orange(position: Position, grid: Grid) -> Grid | None:
 
     new_grid = grid.copy()
     new_grid[position] = color
+
+    # 1 less orange (or blue), which should decrease the other colors
+    new_grid.recount()
     return new_grid
 
 
@@ -341,6 +406,16 @@ def goals_remaining(
         1 for pos, color in goal if grid[pos] != color
     )  
 
+def goal_still_reachable(
+    grid_counts: Counter[Color],
+    goal_counts: Counter[Color],
+) -> bool:
+    """Returns True if the grid can still reach the goal."""
+    return all(
+        grid_counts[color] >= count
+        for color, count in goal_counts.items()
+    )
+
 class Unsolvable(Exception):
     """Raised when queue is exhausted without finding a solution."""
 
@@ -361,6 +436,9 @@ def solve(
 
     max_depth_reached = 0
 
+    goal_counts = Counter(color for _, color in goal)
+    total_impossibles = 0
+
     while current_generation:
         last_play, grid = current_generation.pop()
 
@@ -380,7 +458,13 @@ def solve(
                 # cycle or shorter path already played
                 continue
 
+            # capture this reachable state
             played_states.add(hs)
+
+            # prune this branch if the goal is provably unreachable
+            if not goal_still_reachable(new_grid.counts, goal_counts):
+                total_impossibles += 1
+                continue
 
             # if we've reached the max depth, skip this state
             if play.depth >= max_depth:
@@ -431,7 +515,7 @@ if __name__ == "__main__":
         "Enter the starting state (9 colors, space-separated, top/middle/bottom row): "
     ).upper()
     starting_state = [Color[color] for color in starting_state_str.split()]
-    starting_grid = Grid(starting_state)
+    starting_grid = Grid(starting_state, None)
 
     counts = Counter(c for c in starting_grid.colors if c != Color.GRAY)
     default_goal = counts.most_common(1)[0][0]
@@ -456,7 +540,7 @@ if __name__ == "__main__":
         play, final_grid = solution
         print(f"Solution found ({play.depth + 1} moves):")
         for position, grid in playthrough(play, starting_grid):
-            print(f"Play: {position}, Grid:\n{grid.display()}\n")
             input()
+            print(f"Play: {position}, Grid:\n{grid.display()}\n")
     else:
         print("No solution found.")
