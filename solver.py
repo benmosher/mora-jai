@@ -2,7 +2,6 @@
 
 from dataclasses import field
 import itertools as it
-import heapq
 
 from collections import Counter
 from enum import Enum, auto
@@ -318,15 +317,10 @@ class Play(NamedTuple):
         """Returns a new Play with the given position pressed."""
         return Play(self, position, self.depth + 1)
 
+class State(NamedTuple):
+    play: Play | None
+    grid: Grid 
 
-# ordered by score, then 
-@dataclass(frozen=True, slots=True, order=True)
-class State:
-    grid: Grid = field(compare=False)
-    play: Play | None = field(compare=False)
-    goal_missing: int
-
-    
 
 def press(
     position: Position,
@@ -361,16 +355,14 @@ def solve(
         raise ValueError("Grid already meets goal")
 
     # initialize the queue with the starting state
-    current_generation = [State(goal_missing=goals_remaining(grid, goal), play=None, grid=grid)]
+    current_generation = [State(play=None, grid=grid)]
     next_generation = []
     played_states = {grid.hashable_state()}  # max size: 9! (~362k, not accounting for color changes)
 
     max_depth_reached = 0
 
     while current_generation:
-        state = heapq.heappop(current_generation)
-        last_play = state.play
-        grid = state.grid
+        last_play, grid = current_generation.pop()
 
         for pos in GRID_POSITIONS:
             play = last_play.next(pos) if last_play else Play(None, pos)
@@ -397,7 +389,6 @@ def solve(
 
             # enqueue state into next generation
             next_generation.append(State(
-                goal_missing=goals_remaining(new_grid, goal),
                 play=play,
                 grid=new_grid,
             ))
@@ -406,7 +397,7 @@ def solve(
         if not current_generation and next_generation:
             current_generation = next_generation
             next_generation = []
-            heapq.heapify(current_generation)
+            current_generation.sort(key=lambda s: -goals_remaining(s.grid, goal))
     
     if not max_depth_reached:
         raise Unsolvable(f"No solution found within max depth; {len(played_states)} unique states explored.")
