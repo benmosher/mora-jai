@@ -220,8 +220,11 @@ def white(position: Position, grid: Grid) -> Grid | None:
     # blank out this position
     del new_grid[position]  
     for neighbor in neighbors(position):
-        if grid[neighbor] == color:
+        neighbor_color = grid[neighbor]
+        if neighbor_color == color:
             del new_grid[neighbor]
+        elif neighbor_color == Color.GRAY:
+            new_grid[neighbor] = color
 
     return new_grid
 
@@ -326,6 +329,8 @@ def press(
     behavior = COLOR_BEHAVIORS[grid[position]]
     return behavior(position, grid)
 
+class Unsolvable(Exception):
+    """Raised when queue is exhausted without finding a solution."""
 
 def solve(
     grid: Grid,
@@ -341,6 +346,8 @@ def solve(
     queue = deque()
     played_states = {grid.hashable_state()}  # max size: 9! (~362k, not accounting for color changes)
     queue.append(State(grid, None))
+
+    max_depth_reached = 0
 
     while queue:
         grid, last_play = queue.popleft()
@@ -365,10 +372,16 @@ def solve(
 
             # if we've reached the max depth, skip this state
             if play.depth >= max_depth:
+                max_depth_reached += 1
                 continue
 
             # enqueue state for exploration
             queue.append(State(new_grid, play))
+    
+    if not max_depth_reached:
+        raise Unsolvable(f"No solution found within max depth; {len(played_states)} unique states explored.")
+    
+    return None
 
 
 def playthrough(play: Play, grid: Grid) -> Iterable[tuple[Position, Grid]]:

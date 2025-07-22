@@ -35,6 +35,27 @@ def test__white():
         Color.BLUE, Color.BLUE, Color.BLUE,
     ]
 
+    # toggle on
+    tc = press(Position(-1, -1), c)
+    assert tc.colors == [
+        Color.GRAY, Color.WHITE, Color.WHITE,
+        Color.YELLOW, Color.GRAY, Color.BLACK,
+        Color.BLUE, Color.BLUE, Color.BLUE,
+    ]
+
+def test__solo():
+    grid = create_grid(
+        (Color.WHITE, Color.BLACK, Color.GRAY),
+        (Color.BLACK, Color.PURPLE, Color.GRAY),
+        (Color.GRAY, Color.GRAY, Color.GRAY),
+    )
+    next_grid = press(Position(-1, -1), grid)
+
+    assert next_grid.colors == [
+        Color.GRAY, Color.BLACK, Color.GRAY,
+        Color.BLACK, Color.PURPLE, Color.GRAY,
+        Color.GRAY, Color.GRAY, Color.GRAY,
+    ]
 def test__blue_white():
     grid = create_grid(
         (Color.WHITE, Color.WHITE, Color.WHITE),

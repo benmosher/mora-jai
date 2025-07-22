@@ -71,7 +71,6 @@ def test__sanctum_arch_aries():
     assert actual is not None, "No solution found"
 
 
-@pytest.mark.skip(reason="why won't white work??")
 def test__rough_draft_white():
     grid = create_grid(
         (Color.WHITE, Color.WHITE, Color.WHITE),
@@ -80,6 +79,6 @@ def test__rough_draft_white():
     )
 
     goal = corners(Color.BLUE)
-    actual = solve(grid, goal, max_depth=100)
+    actual = solve(grid, goal, max_depth=30)
 
     assert actual is not None, "No solution found"
