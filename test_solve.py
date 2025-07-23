@@ -81,3 +81,16 @@ def test__rough_draft_white():
     actual = solve(grid, goal, max_depth=30)
 
     assert actual is not None, "No solution found"
+
+def test__rough_draft_red():
+    # red white yellow blue green blue blue yellow blue (goal: red)
+    grid = create_grid(
+        (Color.RED, Color.WHITE, Color.YELLOW),
+        (Color.BLUE, Color.GREEN, Color.BLUE),
+        (Color.BLUE, Color.YELLOW, Color.BLUE),
+    )
+
+    goal = corners(Color.RED)
+    actual = solve(grid, goal, max_depth=50)
+
+    assert actual is not None, "No solution found"

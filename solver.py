@@ -52,25 +52,15 @@ def possible_colors(colors: Collection[Color]) -> Counter[Color]:
     """Determine the feasible color counts of the current grid.
     This is used to determine if the goal is still possible with the current grid state.
     """
+    # TODO: build a list of possible color sets, not just counts
     counts = Counter(colors)
 
     # some colors can be changed!
     oranges = counts[Color.ORANGE]
     blues = counts[Color.BLUE]
     blanks = counts[Color.GRAY]
-
     reds = counts[Color.RED]
-
-    # whites can turn black if there are reds
-    if (whites := counts[Color.WHITE]) and reds:
-        counts[Color.BLACK] += whites
-
-    # blacks can turn red if there are reds
-    if (blacks := counts[Color.BLACK]) and reds:
-        counts[Color.RED] += blacks
-    
-    # TODO: account for blues vs. reds? not sure how this works still. 
-    #       I swear I saw a black turn blue with a red once.
+    whites = counts[Color.WHITE]
 
     # whites can create more whites from blanks
     if whites and blanks:
@@ -84,6 +74,16 @@ def possible_colors(colors: Collection[Color]) -> Counter[Color]:
             # whites could blank and go blue
             counts[Color.BLUE] += whites
 
+    # whites can turn black if there are reds
+    if whites and reds:
+        # use the max count of whites
+        counts[Color.BLACK] += counts[Color.WHITE]
+
+    # blacks can turn red if there are reds
+    if (blacks := counts[Color.BLACK]) and reds:
+        counts[Color.RED] += blacks
+        # TODO: blacks can turn blue too
+    
     # finally: any oranges and blues can turn any color there could be at least 2 of
     if oranges:
         # can increase any color except blanks or oranges, if there are 2 present.
