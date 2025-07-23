@@ -211,8 +211,8 @@ COLOR_BEHAVIORS[Color.YELLOW] = yellow
 
 def red(position: Position, grid: Grid) -> Grid | None:
     """When any red is pressed, all whites turn black, and all blacks turn red."""
-    # TODO: do blues behave as white or black here if one of them is in the center?
 
+    pressed_color = grid[position]
     whites = [pos for pos, color in grid.items() if color == Color.WHITE]
     blacks = [pos for pos, color in grid.items() if color == Color.BLACK]
     if not whites and not blacks:
@@ -222,7 +222,7 @@ def red(position: Position, grid: Grid) -> Grid | None:
     for white in whites:
         new_grid[white] = Color.BLACK
     for black in blacks:
-        new_grid[black] = Color.RED
+        new_grid[black] = pressed_color
 
     new_grid.recount()  # rebuild possible future colors
     return new_grid
