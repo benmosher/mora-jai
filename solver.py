@@ -104,7 +104,7 @@ class Grid(MutableMapping[Position, Color]):
         if len(colors) != 9:
             raise ValueError("Grid must have exactly 9 colors")
         self.colors = colors
-        self.counts = counts or possible_colors(colors)
+        self.counts = counts
 
     colors: list[Color]
 
@@ -462,9 +462,14 @@ def solve(
             played_states.add(hs)
 
             # prune this branch if the goal is provably unreachable
-            if not goal_still_reachable(new_grid.counts, goal_counts):
-                total_impossibles += 1
-                continue
+            if new_grid.counts:
+                if not goal_still_reachable(new_grid.counts, goal_counts):
+                    total_impossibles += 1
+                    continue
+                else:
+                    # clear counts until next recount
+                    new_grid.counts = None
+            
 
             # if we've reached the max depth, skip this state
             if play.depth >= max_depth:
